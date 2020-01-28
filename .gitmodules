@@ -1,0 +1,3 @@
+[submodule "MSP430-Library"]
+	path = MSP430-Library
+	url = https://github.com/UWCubeSat/MSP430-Library.git
