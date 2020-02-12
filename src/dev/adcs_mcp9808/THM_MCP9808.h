@@ -1,12 +1,12 @@
 /*
- * THM_MCP9808.h
+ * thm_MCP9808.h
  *
  *  Created on: Feb 10, 2020
  *      Author: Sebastian S
  */
 
-#ifndef THM_MCP9808_H_
-#define THM_MCP9808_H_
+#ifndef thm_MCP9808_H_
+#define thm_MCP9808_H_
 
 #include <stdint.h>
 
@@ -53,14 +53,14 @@ typedef struct
     float       ambient_converted;  // floating point conversion to C, per datasheet
     uint16_t    ambient_raw;        // raw 13 bit signed int
     char        ambient_flags;      // ambient comparison flags, 3 bit
-} THM_MCP9808_data;
+} thm_MCP9808_data;
 
-void THM_MCP9808_init();
-void THM_MCP9808_send_cfg();
-void THM_MCP9808_send_shutdown();
-void THM_MCP9808_send_turn_on();
-int THM_MCP9808_send_get_cfg_state(uint16_t mask); // given a bitmask, returns true if the config bits in that mask are not 0
+void thm_MCP9808_init();
+void thm_MCP9808_send_cfg();
+void thm_MCP9808_send_shutdown();
+void thm_MCP9808_send_turn_on();
+int thm_MCP9808_send_get_cfg_state(uint16_t mask); // given a bitmask, returns true if the config bits in that mask are not 0
 
-THM_MCP9808_data *THM_MCP9808_read();
+thm_MCP9808_data *thm_MCP9808_read();
 
-#endif /* THM_MCP9808_H_ */
+#endif /* thm_MCP9808_H_ */

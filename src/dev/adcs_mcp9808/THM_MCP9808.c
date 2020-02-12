@@ -1,5 +1,5 @@
 /*
- * THM_MCP9808.c
+ * thm_MCP9808.c
  *
  *  Created on: Feb 10, 2020
  *      Author: Sebastian S
@@ -8,11 +8,9 @@
 #include <stdint.h>
 #include <math.h>
 
-#include "THM_MCP9808.h"
-//#include "MSP430-Library/I2C/I2C.h"
-//#include "MSP430-Library/I2C/comm_utils.h"
-#include "I2C/I2C.h"
-#include "I2C/comm_utils.h"
+#include "thm_MCP9808.h"
+#include "MSP430-Library/I2C/I2C.h"
+#include "MSP430-Library/I2C/comm_utils.h"
 
 #define MAX_BUFF_SIZE 3
 
@@ -23,9 +21,9 @@ static uint16_t cfg;
 static int stale_cfg = 1;           // if 1, the stored cfg is stale and must be refreshed before accessing it
 static hyst_mode hyst = HYST_0;
 
-static THM_MCP9808_data data;
+static thm_MCP9808_data data;
 
-void THM_MCP9808_init(bus_instance_i2c i2c_bus)
+void thm_MCP9808_init(bus_instance_i2c i2c_bus)
 {
     // initialize i2c
     i2cEnable(i2c_bus);
@@ -43,11 +41,11 @@ void THM_MCP9808_init(bus_instance_i2c i2c_bus)
     cfg |= ~THM_MCP9808_CFG_T_POL;              // alert active low
     cfg |= ~THM_MCP9808_CFG_T_MODE;             // alert comparator output
     stale_cfg = 1;
-    THM_MCP9808_send_cfg();
+    thm_MCP9808_send_cfg();
 }
 
 // Writes to the config register with the stored 16 bit configuration.
-void THM_MCP9808_send_cfg()
+void thm_MCP9808_send_cfg()
 {
     i2c_buff[0] = THM_MCP9808_PTR_CONFIG;
     i2c_buff[1] = (uint8_t)(cfg >> 8);      // msb first
@@ -59,7 +57,7 @@ void THM_MCP9808_send_cfg()
     }
 }
 
-THM_MCP9808_data *THM_MCP9808_read()
+thm_MCP9808_data *thm_MCP9808_read()
 {
     // write ambient temp pointer to i2c
     i2c_buff[0] = THM_MCP9808_PTR_T_A;
@@ -89,31 +87,31 @@ THM_MCP9808_data *THM_MCP9808_read()
 }
 
 // Sets the shutdown bit of the sensor if the sensor is not currently shut down
-static void THM_MCP9808_send_shutdown()
+static void thm_MCP9808_send_shutdown()
 {
-    if (!THM_MCP9808_send_get_cfg_state(THM_MCP9808_CFG_SHDN))
+    if (!thm_MCP9808_send_get_cfg_state(THM_MCP9808_CFG_SHDN))
     {
         cfg |= THM_MCP9808_CFG_SHDN;
         stale_cfg = 1;
-        THM_MCP9808_send_cfg();
+        thm_MCP9808_send_cfg();
     }
 }
 
 // Clears the shutdown bit of the sensor if the sensor is currently shut down
-static void THM_MCP9808_send_turn_on()
+static void thm_MCP9808_send_turn_on()
 {
-    if (THM_MCP9808_send_get_cfg_state(THM_MCP9808_CFG_SHDN))
+    if (thm_MCP9808_send_get_cfg_state(THM_MCP9808_CFG_SHDN))
     {
         cfg &= ~THM_MCP9808_CFG_SHDN;
         stale_cfg = 1;
-        THM_MCP9808_send_cfg();
+        thm_MCP9808_send_cfg();
     }
 
 }
 
 // Returns whether the config bits in the mask are set.
 // If the config bits are stale, reads them from the config register.
-int THM_MCP9808_send_get_cfg_state(uint16_t mask)
+int thm_MCP9808_send_get_cfg_state(uint16_t mask)
 {
     if (stale_cfg)
     {
