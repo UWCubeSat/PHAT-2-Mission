@@ -1,125 +1,141 @@
 /*
- * thm_MCP9808.c
+ * thm_mcp9808.c
  *
- *  Created on: Feb 10, 2020
- *      Author: Sebastian S
+ *  Created on: Feb 19, 2020
+ *      Author: tengo
+ *
+ *  Driver implementation for the mcp9808.
  */
 
 #include <stdint.h>
+#include <errno.h>
 #include <math.h>
+#include "mcp9808.h"
 
-#include "thm_MCP9808.h"
+#include "thm_mcp9808.h"
+#include "thm.h"
+
 #include "MSP430-Library/I2C/I2C.h"
 #include "MSP430-Library/I2C/comm_utils.h"
 
-#define MAX_BUFF_SIZE 3
+#define MAX_INSTANCES   8           // 3 address pins, 8 possible instances
+#define MAX_BUFFER      3           // at most, write 1 byte and read/write 2
 
-static hDev hSensor;
-static uint8_t i2c_buff[MAX_BUFF_SIZE];
+typedef struct _thm_mcp9808_data {
+    int initialized;
+    hDev device_handle;
+    uint8_t address;
+    uint16_t config;
+} thm_mcp9808_data;
 
-static uint16_t cfg;
-static int stale_cfg = 1;           // if 1, the stored cfg is stale and must be refreshed before accessing it
-static hyst_mode hyst = HYST_0;
+static thm_mcp9808_data instances[MAX_INSTANCES];
+static uint8_t i2c_buffer[MAX_BUFFER];
 
-static thm_MCP9808_data data;
+static int error_from_result(i2c_result result) {
+    switch (result) {
+        case i2cRes_noerror:
+            return 0;
+        case i2cRes_startTimeout:
+        case i2cRes_stopTimeout:
+        case i2cRes_transmitTimeout:
+            return ETIMEDOUT;
+        case i2cRes_nack:
+            return EIO;
+        default:
+            return EINVAL;
+    }
+}
 
-void thm_MCP9808_init(bus_instance_i2c i2c_bus)
-{
-    // initialize i2c
+// Writes the address of the register first, then the bytes to be written into it (msb first)
+static int write_to_register(hDev inst_handle, uint8_t reg_ptr, uint8_t *bytes, uint8_t size_to_write) {
+    thm_mcp9808_data instance = instances[inst_handle];
+    i2c_buffer[0] = reg_ptr;
+    uint8_t i;
+    for (i = 0; i < size_to_write; i++) { // count down from size to write - 1 to 0
+        i2c_buffer[i+1] = bytes[i];
+    }
+    i2c_result result = i2cMasterWrite(instance.device_handle, i2c_buffer, size_to_write + 1);
+
+    return error_from_result(result);
+}
+
+static int write_to_config(hDev inst_handle) {
+    thm_mcp9808_data instance = instances[inst_handle];
+    uint8_t temp[] = { instance.config >> 8, instance.config & 0xff };
+    return write_to_register(inst_handle, MCP9808_PTR_CONFIG, temp, 2);
+}
+
+static int write_to_resolution(hDev inst_handle, int resolution) {
+    uint8_t res = resolution & 0xff;
+    return write_to_register(inst_handle, MCP9808_PTR_RES, &res, 1);
+}
+
+int thm_mcp9808_init_full(bus_instance_i2c i2c_bus, hDev *instance, uint8_t addr_pins,
+                          thm_mcp9808_res res, thm_mcp9808_hyst hyst) {
+    if (addr_pins >= MAX_INSTANCES) { // address out of range
+        return EINVAL;
+    }
+    thm_mcp9808_data thm = instances[addr_pins];
+    if (thm.initialized) { // instance already initialized with this address
+        return EINVAL;
+    }
+
+    uint8_t address = MCP9808_I2C_7BIT_ADDR | addr_pins;
+    hDev inst_handle = addr_pins;
+
     i2cEnable(i2c_bus);
-    hSensor = i2cInit(i2c_bus, THM_MCP9808_I2C_7BIT_ADDR);
+    thm.device_handle = i2cInit(i2c_bus, address);
+    thm.address = address;
 
-    // initialize configs (ignore staleness of cfg for first boot)
-    cfg = (THM_MCP9808_CFG_T_HYST & (int)hyst); // 0 hysteresis
-    cfg |= ~THM_MCP9808_CFG_SHDN;               // not shutdown, constant conversion
-    cfg |= THM_MCP9808_CFG_C_LOCK;              // locked critical temp
-    cfg |= THM_MCP9808_CFG_W_LOCK;              // locked temp limit windows
-    cfg |= ~THM_MCP9808_CFG_INT_CLR;            // no effect
-    cfg |= ~THM_MCP9808_CFG_A_STAT;             // output not asserted
-    cfg |= ~THM_MCP9808_CFG_A_CTRL;             // alert disabled
-    cfg |= ~THM_MCP9808_CFG_A_SEL;              // alert can output on window/crit thresholds
-    cfg |= ~THM_MCP9808_CFG_T_POL;              // alert active low
-    cfg |= ~THM_MCP9808_CFG_T_MODE;             // alert comparator output
-    stale_cfg = 1;
-    thm_MCP9808_send_cfg();
+    // initialize configs
+    uint16_t cfg = (int)hyst;       // hysteresis
+    cfg |= ~MCP9808_CFG_SHDN;       // not shutdown, constant conversion
+    cfg |= MCP9808_CFG_C_LOCK;      // locked critical temp
+    cfg |= MCP9808_CFG_W_LOCK;      // locked temp limit windows
+    cfg |= ~MCP9808_CFG_INT_CLR;    // no effect
+    cfg |= ~MCP9808_CFG_A_STAT;     // output not asserted
+    cfg |= ~MCP9808_CFG_A_CTRL;     // alert disabled
+    cfg |= ~MCP9808_CFG_A_SEL;      // alert can output on window/crit thresholds
+    cfg |= ~MCP9808_CFG_A_POL;      // alert active low
+    cfg |= ~MCP9808_CFG_A_MODE;     // alert comparator output
+    thm.config = cfg;
+
+    int result = write_to_config(inst_handle);
+    if (result) { return result; } // if failed, return error
+    result = write_to_resolution(inst_handle, res);
+    if (result) { return result; } // if failed, return error
+
+    *instance = inst_handle;
+    return 0;
 }
 
-// Writes to the config register with the stored 16 bit configuration.
-void thm_MCP9808_send_cfg()
-{
-    i2c_buff[0] = THM_MCP9808_PTR_CONFIG;
-    i2c_buff[1] = (uint8_t)(cfg >> 8);      // msb first
-    i2c_buff[2] = (uint8_t)(cfg & 0xff);
-    //i2c_result result = i2cMasterWrite(hSensor, i2c_buff, 3);
-    if (i2cMasterWrite(hSensor, i2c_buff, 3) == i2cRes_noerror)
-    {
-        stale_cfg = 0;
-    }
+int thm_mcp9808_init(bus_instance_i2c i2c_bus, uint8_t *instance, uint8_t addr_pins) {
+    return thm_mcp9808_init_full(i2c_bus, instance, addr_pins, THM_MCP9808_RES_1_16, THM_MCP9808_HYST_0);
 }
 
-thm_MCP9808_data *thm_MCP9808_read()
-{
+int thm_mcp9808_read(hDev inst_handle, float *temp, thm_conversion conversion) {
+    thm_mcp9808_data instance = instances[inst_handle];
+
     // write ambient temp pointer to i2c
-    i2c_buff[0] = THM_MCP9808_PTR_T_A;
+    i2c_buffer[0] = MCP9808_PTR_T_A;
     // write address from buffer index 0, read 2 bytes into indices 1 and 2
-    i2c_result result = i2cMasterCombinedWriteRead(hSensor, i2c_buff, 1, &i2c_buff[1], 2);
+    i2c_result result = i2cMasterCombinedWriteRead(instance.device_handle, i2c_buffer, 1, &i2c_buffer[1], 2);
 
-    if (result != i2cRes_noerror)
-    {
-        // error!
+    if (result) {
+        return error_from_result(result);
     }
 
-    uint8_t msb = i2c_buff[1];          // msb first
-    uint8_t lsb = i2c_buff[2];
+    uint8_t msb = i2c_buffer[1];
+    uint8_t lsb = i2c_buffer[2];
 
     uint16_t raw = msb << 8 | lsb;
 
-    data.ambient_flags = (raw >> 13);   // first 3 flag bits
+    raw &= 0x1fff;                          // clear flags
 
-    raw &= 0x1F00;                      // clear flags
-    data.ambient_raw = raw;             // 13 bit 2's complement
+    int16_t sign = -(raw & 0x1000);         // 0b 0001 0000 0000 0000
+    uint16_t body = raw & 0x0fff;           // 0b 0000 1111 1111 1111
+    float out = ldexpf(sign + body, -4);    // divide sign + body by 16
 
-    int16_t sign = -(raw & 0x1000);     // 0b 0001 0000 0000 0000
-    uint16_t body = raw & 0x0fff;       // 0b 0000 1111 1111 1111
-    data.ambient_converted = ldexpf(sign + body, -4); // divide sign + body by 16
-
-    return &data;
+    *temp = thm_convert_from_celsius(out, conversion);
+    return 0;
 }
-
-// Sets the shutdown bit of the sensor if the sensor is not currently shut down
-static void thm_MCP9808_send_shutdown()
-{
-    if (!thm_MCP9808_send_get_cfg_state(THM_MCP9808_CFG_SHDN))
-    {
-        cfg |= THM_MCP9808_CFG_SHDN;
-        stale_cfg = 1;
-        thm_MCP9808_send_cfg();
-    }
-}
-
-// Clears the shutdown bit of the sensor if the sensor is currently shut down
-static void thm_MCP9808_send_turn_on()
-{
-    if (thm_MCP9808_send_get_cfg_state(THM_MCP9808_CFG_SHDN))
-    {
-        cfg &= ~THM_MCP9808_CFG_SHDN;
-        stale_cfg = 1;
-        thm_MCP9808_send_cfg();
-    }
-
-}
-
-// Returns whether the config bits in the mask are set.
-// If the config bits are stale, reads them from the config register.
-int thm_MCP9808_send_get_cfg_state(uint16_t mask)
-{
-    if (stale_cfg)
-    {
-        i2c_buff[0] = THM_MCP9808_PTR_CONFIG;
-        i2cMasterRead(hSensor, i2c_buff, 2);
-        cfg = ((uint16_t)i2c_buff[0] << 8) | i2c_buff[1];
-        stale_cfg = 0;
-    }
-    return (cfg & mask) == mask;
-}
-
