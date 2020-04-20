@@ -1,27 +1,35 @@
 # FIXED
 
 main.obj: ../main.c
-main.obj: C:/ti/ccsv7/ccs_base/msp430/include/msp430.h
-main.obj: C:/ti/ccsv7/ccs_base/msp430/include/msp430fr5994.h
-main.obj: C:/ti/ccsv7/ccs_base/msp430/include/in430.h
-main.obj: C:/ti/ccsv7/tools/compiler/ti-cgt-msp430_17.9.0.STS/include/intrinsics.h
-main.obj: C:/ti/ccsv7/tools/compiler/ti-cgt-msp430_17.9.0.STS/include/intrinsics_legacy_undefs.h
-main.obj: C:/ti/ccsv7/ccs_base/msp430/include/legacy.h
+main.obj: C:/tools/ti/ccs930/ccs/ccs_base/msp430/include/msp430.h
+main.obj: C:/tools/ti/ccs930/ccs/ccs_base/msp430/include/msp430fr5994.h
+main.obj: C:/tools/ti/ccs930/ccs/ccs_base/msp430/include/in430.h
+main.obj: C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/intrinsics.h
+main.obj: C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/intrinsics_legacy_undefs.h
+main.obj: C:/tools/ti/ccs930/ccs/ccs_base/msp430/include/legacy.h
 main.obj: ../../../../MSP430-Library/I2C/I2C.h
-main.obj: C:/ti/ccsv7/tools/compiler/ti-cgt-msp430_17.9.0.STS/include/stdint.h
-main.obj: ../../../../MSP430-Library/I2C/../base/bsp.c
-main.obj: ../../../../MSP430-Library/I2C/../base/bsp.h
-main.obj: ../../../../MSP430-Library/I2C/comm_utils.h
+main.obj: C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/stdint.h
+main.obj: C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/_stdint40.h
+main.obj: C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/sys/stdint.h
+main.obj: C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/sys/cdefs.h
+main.obj: C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/sys/_types.h
+main.obj: C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/machine/_types.h
+main.obj: C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/machine/_stdint.h
+main.obj: C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/sys/_stdint.h
 
 ../main.c: 
-C:/ti/ccsv7/ccs_base/msp430/include/msp430.h: 
-C:/ti/ccsv7/ccs_base/msp430/include/msp430fr5994.h: 
-C:/ti/ccsv7/ccs_base/msp430/include/in430.h: 
-C:/ti/ccsv7/tools/compiler/ti-cgt-msp430_17.9.0.STS/include/intrinsics.h: 
-C:/ti/ccsv7/tools/compiler/ti-cgt-msp430_17.9.0.STS/include/intrinsics_legacy_undefs.h: 
-C:/ti/ccsv7/ccs_base/msp430/include/legacy.h: 
+C:/tools/ti/ccs930/ccs/ccs_base/msp430/include/msp430.h: 
+C:/tools/ti/ccs930/ccs/ccs_base/msp430/include/msp430fr5994.h: 
+C:/tools/ti/ccs930/ccs/ccs_base/msp430/include/in430.h: 
+C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/intrinsics.h: 
+C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/intrinsics_legacy_undefs.h: 
+C:/tools/ti/ccs930/ccs/ccs_base/msp430/include/legacy.h: 
 ../../../../MSP430-Library/I2C/I2C.h: 
-C:/ti/ccsv7/tools/compiler/ti-cgt-msp430_17.9.0.STS/include/stdint.h: 
-../../../../MSP430-Library/I2C/../base/bsp.c: 
-../../../../MSP430-Library/I2C/../base/bsp.h: 
-../../../../MSP430-Library/I2C/comm_utils.h: 
+C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/stdint.h: 
+C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/_stdint40.h: 
+C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/sys/stdint.h: 
+C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/sys/cdefs.h: 
+C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/sys/_types.h: 
+C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/machine/_types.h: 
+C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/machine/_stdint.h: 
+C:/tools/ti/ccs930/ccs/tools/compiler/ti-cgt-msp430_18.12.4.LTS/include/sys/_stdint.h: 
